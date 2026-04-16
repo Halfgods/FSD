@@ -50,6 +50,18 @@ app.get('/users/search', async (req, res) => {
   }
 });
 
+// Check index usage using .explain() (GET)
+app.get('/users/explain', async (req, res) => {
+  try {
+    // const { email } = req.query;
+    // if (!email) return res.status(400).json({ error: 'Email query parameter is required' });
+    const stats = await User.find({}).explain("executionStats");
+    res.status(200).json(stats);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Filter using email and age (GET)
 app.get('/users/filter', async (req, res) => {
   try {
@@ -102,6 +114,49 @@ app.get('/users', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// Postlab explanations (GET)
+app.get('/postlab', (req, res) => {
+  const postlabAnswers = {
+    compoundIndex: {
+      index: "{ email: 1, age: -1 }",
+      queries: [
+        {
+          query: "find({ email: 'test@gmail.com' })",
+          usesIndex: true,
+          explanation: "Matches the index prefix (email). MongoDB can efficiently use the index to locate all documents with this email."
+        },
+        {
+          query: "find({ age: 25 })",
+          usesIndex: false,
+          explanation: "Does not include the index prefix (email). It will result in a full collection scan (COLLSCAN)."
+        },
+        {
+          query: "find({ email: 'test@gmail.com', age: 25 })",
+          usesIndex: true,
+          explanation: "Utilizes both fields in the exact order specified by the compound index."
+        }
+      ]
+    },
+    schemaValidation: {
+      schema: "email: { type: String, required: true, unique: true }",
+      scenarios: [
+        {
+          condition: "without email",
+          error: "Mongoose ValidationError",
+          explanation: "Mongoose validation fails at the application level because 'required: true' is not met. It never reaches MongoDB."
+        },
+        {
+          condition: "with duplicate email",
+          error: "MongoDB MongoServerError (code 11000)",
+          explanation: "Mongoose validation passes, but MongoDB rejects the document at the database level because it violates the unique index on email."
+        }
+      ],
+      sameError: false
+    }
+  };
+  res.status(200).json(postlabAnswers);
 });
 
 // Update user by ID (PUT)
