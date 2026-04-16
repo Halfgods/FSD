@@ -1,0 +1,14 @@
+{
+    "_id": "69e0908c02fd9b2f3074e25e",
+    "name": "Postman Test",
+    "email": "postman@test.com",
+    "age": 28,
+    "hobbies": [
+        "coding",
+        "testing"
+    ],
+    "bio": "Just testing APIs",
+    "userId": "9999",
+    "createdAt": "2026-04-16T07:32:28.100Z",
+    "__v": 0
+}
